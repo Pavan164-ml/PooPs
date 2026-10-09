@@ -1,0 +1,1237 @@
+Create a comprehensive, hands-on Jupyter notebook whose primary purpose is to teach me Python OOP and software architecture concepts by progressively building a production-oriented single-agent system.
+
+Context
+
+I already understand the fundamentals of Agentic AI, including:
+
+Agents
+Tools
+Tool calling
+LLMs
+Prompts
+Agent loops
+Memory/context
+RAG at a conceptual level
+
+What I need to learn deeply is the Python/software-engineering side required to build reusable, maintainable agentic systems.
+
+My lead has asked me to enhance an existing single-agent implementation with:
+
+Strong abstraction between:
+Agentic/application code
+Tools
+Data/semantic layer
+Interface-based coding.
+Provider + Adapter architecture.
+Platform independence/reusability.
+An architecture that could support different implementations/platforms such as:
+Databricks Mosaic AI
+Databricks Metrics Views / semantic layer
+AWS
+Snowflake
+Other future data/AI platforms
+
+The goal is NOT to build a platform-specific solution.
+
+The goal is to understand the fundamentals well enough that I can take an existing single-agent codebase and refactor it into a clean, reusable architecture.
+
+Notebook Objective
+
+Build the notebook as a progressive learning journey:
+
+Python OOP fundamentals ↓ Abstraction ↓ Interfaces / Protocols / ABC ↓ Composition ↓ Dependency Injection ↓ SOLID principles ↓ Design Patterns ↓ Provider / Adapter architecture ↓ Layered / Hexagonal architecture ↓ Agentic application architecture ↓ Platform-independent single-agent system ↓ Refactoring an existing agentic implementation
+
+Do NOT jump directly into enterprise architecture.
+
+Teach the underlying OOP concepts first and show exactly why each concept becomes useful when building agentic systems.
+
+Important Teaching Requirement
+
+For every concept:
+
+Explain the concept in simple Python terms.
+Show a very small example unrelated to AI.
+Show the same concept applied to an agentic system.
+Explain what problem it solves.
+Explain when NOT to use it.
+Show a bad implementation.
+Refactor it into a better implementation.
+Explain the trade-offs.
+
+Avoid teaching OOP as isolated theory.
+
+Constantly connect the concepts back to this question:
+
+"How does this help me build a reusable, platform-independent agent?"
+
+Part 1 — Python OOP Fundamentals
+
+Start from the absolute foundations, but keep the examples practical.
+
+Cover:
+
+1. Classes and Objects
+
+Explain:
+
+Class
+Object
+Instance
+Attributes
+Methods
+Constructor
+self
+
+Use a simple example such as:
+
+class Calculator:
+    ...
+
+
+Then move to:
+
+class Agent:
+    ...
+
+
+Explain why an Agent should not necessarily know how the underlying data platform works.
+
+2. Encapsulation
+
+Teach:
+
+Public attributes
+Protected convention
+Private attributes
+Properties
+Getters/setters
+Why encapsulation matters
+
+Use an example such as:
+
+class AgentConfig:
+    ...
+
+
+Then show how configuration/data-access details can be hidden behind an object.
+
+3. Inheritance
+
+Teach:
+
+Parent class
+Child class
+Method overriding
+super()
+Polymorphism through inheritance
+
+Example:
+
+class DataProvider:
+    ...
+
+class SnowflakeDataProvider(DataProvider):
+    ...
+
+class DatabricksDataProvider(DataProvider):
+    ...
+
+
+Then explicitly explain why inheritance alone may NOT be the best abstraction mechanism for our use case.
+
+4. Composition
+
+Teach composition deeply.
+
+Example:
+
+class Agent:
+    def __init__(self, llm, tool_registry, data_provider):
+        ...
+
+
+Explain:
+
+"An Agent HAS an LLM, HAS tools, and HAS access to a data abstraction."
+
+Compare:
+
+Inheritance:
+Agent IS-A ...
+
+Composition:
+Agent HAS-A ...
+
+
+Explain why composition is usually preferable for our architecture.
+
+Part 2 — Abstraction
+
+Explain abstraction in depth.
+
+Start with:
+
+class DataProvider:
+    def execute(self, query):
+        raise NotImplementedError
+
+
+Then explain why this is insufficient.
+
+Introduce:
+
+Abstract classes
+abc.ABC
+@abstractmethod
+
+Example:
+
+from abc import ABC, abstractmethod
+
+class DataProvider(ABC):
+
+    @abstractmethod
+    def execute(self, query):
+        pass
+
+
+Then implementations:
+
+class SnowflakeProvider(DataProvider):
+    ...
+
+class DatabricksProvider(DataProvider):
+    ...
+
+
+Explain exactly what abstraction means:
+
+"The consumer knows WHAT capability is available, but not HOW it is implemented."
+
+Relate this directly to agentic systems.
+
+Part 3 — Interfaces in Python
+
+Explain that Python does not have Java-style interfaces in exactly the same way.
+
+Cover:
+
+Abstract Base Classes
+typing.Protocol
+Duck typing
+
+Compare:
+
+class DataProvider(ABC):
+    ...
+
+
+with:
+
+from typing import Protocol
+
+class DataProvider(Protocol):
+    def execute(self, query: str) -> list:
+        ...
+
+
+Explain:
+
+Runtime enforcement
+Static typing
+Structural typing
+Explicit contracts
+When ABC is preferable
+When Protocol is preferable
+
+For the architecture in this notebook, demonstrate both approaches and recommend one for the final design with justification.
+
+Part 4 — Polymorphism
+
+Teach polymorphism using the exact architecture we are building.
+
+Example:
+
+provider: DataProvider
+
+provider.execute(...)
+
+
+The agent should not care whether:
+
+provider = SnowflakeProvider()
+provider = DatabricksProvider()
+provider = AwsProvider()
+
+
+Explain why this is one of the key ideas behind platform independence.
+
+Show the same agent working with multiple providers without modifying the agent.
+
+Part 5 — Dependency Injection
+
+Teach Dependency Injection carefully.
+
+Start with the bad approach:
+
+class Agent:
+
+    def __init__(self):
+        self.provider = SnowflakeProvider()
+
+
+Explain why this creates tight coupling.
+
+Then:
+
+class Agent:
+
+    def __init__(self, provider: DataProvider):
+        self.provider = provider
+
+
+Explain:
+
+Dependency
+Dependency injection
+Constructor injection
+Inversion of Control
+Why DI makes testing easier
+Why DI is important for agentic systems
+
+Show:
+
+agent = Agent(SnowflakeProvider())
+
+
+and:
+
+agent = Agent(DatabricksProvider())
+
+
+without modifying Agent.
+
+Part 6 — SOLID Principles
+
+Teach each SOLID principle with agentic examples.
+
+S — Single Responsibility Principle
+
+Show why this is problematic:
+
+class Agent:
+    def call_llm(self):
+        ...
+
+    def execute_sql(self):
+        ...
+
+    def connect_to_snowflake(self):
+        ...
+
+    def format_metrics(self):
+        ...
+
+    def log(self):
+        ...
+
+
+Refactor into appropriate components.
+
+O — Open/Closed Principle
+
+Demonstrate:
+
+Existing Agent
+       |
+       +-- Snowflake Provider
+       +-- Databricks Provider
+       +-- AWS Provider
+
+
+Adding a provider should not require modifying the agent.
+
+L — Liskov Substitution Principle
+
+Show how all implementations should honor the same contract.
+
+Explain what happens if:
+
+SnowflakeProvider.execute()
+
+
+and:
+
+DatabricksProvider.execute()
+
+
+behave fundamentally differently despite implementing the same interface.
+
+I — Interface Segregation Principle
+
+Instead of one giant:
+
+PlatformProvider
+
+
+consider smaller interfaces:
+
+QueryExecutor
+SchemaProvider
+MetricProvider
+MetadataProvider
+
+
+Explain why this may be useful for data/semantic platforms.
+
+D — Dependency Inversion Principle
+
+This is especially important.
+
+Explain:
+
+BAD
+
+Agent
+  ↓
+Snowflake SDK
+
+
+versus:
+
+GOOD
+
+Agent
+  ↓
+DataProvider interface
+  ↑
+  |
+Snowflake Adapter
+
+
+Make this one of the most detailed sections.
+
+Part 7 — Python Design Patterns Relevant to Agentic Systems
+
+Do not teach every design pattern.
+
+Focus only on patterns that are useful for this architecture.
+
+Cover:
+
+Strategy Pattern
+Adapter Pattern
+Factory Pattern
+Dependency Injection
+Repository Pattern
+Facade Pattern
+
+For each:
+
+Problem
+Simple example
+Agentic example
+When to use
+When not to use
+Part 8 — Adapter Pattern
+
+This should be one of the major sections.
+
+Explain the problem:
+
+Different platforms expose different APIs.
+
+For example:
+
+Snowflake API
+Databricks API
+AWS API
+
+
+But our application wants:
+
+query_executor.execute(query)
+
+
+Create:
+
+class QueryExecutor(Protocol):
+
+    def execute(self, query: str) -> QueryResult:
+        ...
+
+
+Then:
+
+class SnowflakeQueryAdapter:
+    ...
+
+class DatabricksQueryAdapter:
+    ...
+
+class AWSQueryAdapter:
+    ...
+
+
+Show how adapters translate platform-specific APIs into our common interface.
+
+Make the distinction very clear between:
+
+Interface
+Provider
+Adapter
+SDK
+Application/service
+Domain model
+Part 9 — Provider vs Adapter
+
+I specifically need to understand the difference between "Provider" and "Adapter".
+
+Teach this carefully.
+
+Use a concrete architecture such as:
+
+Agent
+  |
+  v
+Data Service
+  |
+  v
+DataProvider Interface
+  |
+  +----------------------+
+  |                      |
+  v                      v
+Snowflake Provider    Databricks Provider
+  |                      |
+  v                      v
+Snowflake Adapter     Databricks Adapter
+  |                      |
+  v                      v
+Snowflake SDK         Databricks SDK/API
+
+
+Then critically evaluate whether this architecture is unnecessarily complicated.
+
+Explain alternative interpretations of "Provider" and "Adapter".
+
+Show a simpler architecture if appropriate.
+
+The objective is NOT to blindly implement patterns.
+
+The objective is to understand why and when the patterns are useful.
+
+Part 10 — Domain Models
+
+Introduce proper domain models.
+
+Do not pass raw dictionaries everywhere.
+
+Example:
+
+from dataclasses import dataclass
+
+@dataclass
+class QueryRequest:
+    query: str
+    parameters: dict
+
+@dataclass
+class QueryResult:
+    rows: list
+    columns: list
+
+
+Explain why domain objects help decouple application code from platform-specific response formats.
+
+Show how Snowflake and Databricks responses can both be converted into:
+
+QueryResult
+
+Part 11 — Layered Architecture
+
+Introduce layers.
+
+Start simple:
+
+Presentation
+     ↓
+Application
+     ↓
+Domain
+     ↓
+Infrastructure
+
+
+Then map them to the agentic system.
+
+For example:
+
+Agent / API
+     ↓
+Application Services
+     ↓
+Domain Interfaces
+     ↓
+Provider / Adapter
+     ↓
+Platform SDK
+
+
+Explain what each layer is allowed to know.
+
+Create a dependency rule:
+
+Higher-level business/application logic
+should NOT depend directly on infrastructure details.
+
+Part 12 — Hexagonal / Ports and Adapters Architecture
+
+Introduce Hexagonal Architecture only after the previous concepts are understood.
+
+Explain:
+
+Ports
+Adapters
+Primary/driving adapters
+Secondary/driven adapters
+
+Map it to an agentic system:
+
+                    ┌────────────────────┐
+                    │   Agent / API      │
+                    └─────────┬──────────┘
+                              |
+                       Driving Adapter
+                              |
+                    ┌─────────▼──────────┐
+                    │ Application Core   │
+                    │                    │
+                    │ Agent Orchestrator │
+                    │ Tool Services      │
+                    └─────────┬──────────┘
+                              |
+                         Ports/Interfaces
+                              |
+             ┌────────────────┼────────────────┐
+             |                |                |
+             ▼                ▼                ▼
+       LLM Provider     Data Provider      Tool Provider
+             |                |                |
+             ▼                ▼                ▼
+        OpenAI/etc.      Snowflake/etc.    APIs/Services
+
+
+Explain why this architecture is particularly useful when the underlying platform may change.
+
+Part 13 — Agentic Architecture
+
+Now build a simple single-agent system.
+
+The agent should have:
+
+Agent
+ ├── LLM
+ ├── Tool Registry
+ ├── Data Service
+ └── Memory/Context
+
+
+But ensure the Agent does NOT directly know about:
+
+Snowflake SDK
+Databricks SDK
+AWS SDK
+SQL connector implementation
+Platform-specific response objects
+
+Instead:
+
+Agent
+  ↓
+Tool
+  ↓
+Application Service
+  ↓
+Interface
+  ↓
+Adapter
+  ↓
+Platform
+
+Part 14 — Tool Abstraction
+
+Create a generic tool contract.
+
+For example:
+
+class Tool(Protocol):
+    name: str
+    description: str
+
+    def execute(self, input: dict) -> ToolResult:
+        ...
+
+
+Then create:
+
+QueryDataTool
+GetSchemaTool
+GetMetricTool
+
+
+Explain why tools should ideally represent capabilities rather than platform-specific implementations.
+
+For example:
+
+BAD:
+
+SnowflakeSQLTool
+
+
+Better:
+
+QueryDataTool
+
+
+with:
+
+QueryDataTool
+    ↓
+QueryService
+    ↓
+QueryExecutor interface
+    ↓
+SnowflakeAdapter
+
+Part 15 — Semantic/Data Layer
+
+This is especially important for my use case.
+
+Create an abstraction around the semantic/data layer.
+
+For example:
+
+class SemanticQueryProvider(Protocol):
+
+    def query(self, request: QueryRequest) -> QueryResult:
+        ...
+
+
+Potential implementations:
+
+Databricks Metrics View Provider
+Snowflake Semantic Layer Provider
+AWS Data Provider
+Mock Provider
+
+
+Explain that the agent should reason in terms of business capabilities rather than knowing which platform implements them.
+
+For example:
+
+The agent asks:
+
+"Get revenue for Q3"
+
+
+It should not need to know:
+
+Databricks Metrics View
+Snowflake semantic model
+AWS Athena
+
+
+The provider/adapter layer handles that translation.
+
+Part 16 — Testing
+
+Use the architecture to demonstrate testing.
+
+Show why this is hard:
+
+Agent()
+
+
+when the agent directly creates:
+
+SnowflakeConnection()
+
+
+Then show how interfaces make testing easy.
+
+Create:
+
+MockDataProvider
+
+
+and inject it.
+
+Example:
+
+agent = Agent(
+    data_provider=MockDataProvider(...)
+)
+
+
+Teach:
+
+Unit testing
+Mocking
+Stubs
+Fakes
+Dependency injection for testing
+
+Do not rely entirely on unittest.mock; first explain why dependency substitution is possible because of the interface.
+
+Part 17 — Configuration
+
+Explain why configuration should not leak into business logic.
+
+Create configuration such as:
+
+@dataclass
+class AgentConfig:
+    model_name: str
+    temperature: float
+
+
+and provider configuration:
+
+@dataclass
+class DataProviderConfig:
+    ...
+
+
+Explain:
+
+Configuration
+    ↓
+Factory / Composition Root
+    ↓
+Dependencies
+    ↓
+Application
+
+Part 18 — Factory / Composition Root
+
+Introduce a composition root where dependencies are assembled.
+
+For example:
+
+def create_agent(config):
+    provider = create_data_provider(config)
+    llm = create_llm(config)
+
+    return Agent(
+        llm=llm,
+        data_provider=provider
+    )
+
+
+Explain why this keeps infrastructure decisions outside the Agent.
+
+Part 19 — Final Reference Architecture
+
+Build a complete but intentionally simple reference implementation.
+
+Target architecture:
+
+                    USER / API
+                        |
+                        v
+                 +-------------+
+                 |    AGENT    |
+                 +-------------+
+                        |
+             +----------+----------+
+             |                     |
+             v                     v
+       Tool Registry         LLM Interface
+             |
+             v
+        Agent Tools
+             |
+             v
+      Application Services
+             |
+             v
+     Domain Interfaces / Ports
+             |
+       +-----+------+----------------+
+       |            |                |
+       v            v                v
+ Data Provider   LLM Provider    Other Providers
+       |
+       v
+    Adapter
+       |
+ +-----+---------+---------+
+ |               |         |
+ v               v         v
+Snowflake     Databricks   AWS
+
+
+Keep the actual implementation small enough to understand.
+
+Do NOT create unnecessary enterprise abstractions.
+
+Part 20 — Platform Switching Demo
+
+Demonstrate:
+
+agent = create_agent(
+    provider="snowflake"
+)
+
+
+Then:
+
+agent = create_agent(
+    provider="databricks"
+)
+
+
+Then:
+
+agent = create_agent(
+    provider="aws"
+)
+
+
+The Agent implementation itself must remain unchanged.
+
+Clearly identify exactly which code changes when switching platforms.
+
+Part 21 — Refactoring Exercise
+
+At this point create an intentionally badly designed single-agent implementation.
+
+Example:
+
+class Agent:
+
+    def run(self, question):
+
+        if "revenue" in question:
+            connection = SnowflakeConnection(...)
+            result = connection.execute(...)
+            ...
+
+        elif "customer" in question:
+            ...
+
+
+Include:
+
+Hard-coded provider
+Direct SDK calls
+Mixed responsibilities
+Poor abstractions
+Tight coupling
+Difficult testing
+
+Then ask me to refactor it step by step.
+
+Do not immediately provide the final answer.
+
+Give me exercises such as:
+
+Exercise 1
+
+Identify responsibilities.
+
+Exercise 2
+
+Identify dependencies.
+
+Exercise 3
+
+Identify abstractions/interfaces.
+
+Exercise 4
+
+Design the domain models.
+
+Exercise 5
+
+Extract the provider interface.
+
+Exercise 6
+
+Create an adapter.
+
+Exercise 7
+
+Inject dependencies.
+
+Exercise 8
+
+Add a second platform.
+
+Exercise 9
+
+Add a mock provider.
+
+Exercise 10
+
+Write unit tests.
+
+After I attempt each exercise, provide the solution and explain why it is better.
+
+Part 22 — Architecture Decision Exercises
+
+Give me realistic architectural questions.
+
+For example:
+
+Question 1
+
+Should this be:
+
+DataProvider
+
+
+or:
+
+QueryExecutor
+MetricProvider
+SchemaProvider
+
+
+Discuss interface segregation.
+
+Question 2
+
+Should I use:
+
+ABC
+
+
+or:
+
+Protocol
+
+
+?
+
+Question 3
+
+Should the Agent call the DataProvider directly, or should there be an Application Service?
+
+Question 4
+
+Should QueryResult be a dataclass, Pydantic model, or dictionary?
+
+Question 5
+
+When is an Adapter unnecessary abstraction?
+
+Question 6
+
+When does Provider + Adapter become over-engineering?
+
+Question 7
+
+Should the tool know about the provider?
+
+Question 8
+
+Where should platform-specific SQL generation live?
+
+Question 9
+
+Where should authentication and connection management live?
+
+Question 10
+
+Where should semantic-layer concepts such as metrics, dimensions, filters, and entities be represented?
+
+For each answer, explain the architectural trade-off rather than presenting one universal answer.
+
+Part 23 — Anti-Patterns
+
+Include a section on common mistakes:
+
+God Agent
+God Provider
+Giant Interface
+Excessive inheritance
+Abstraction for everything
+Leaking SDK objects
+Passing dictionaries everywhere
+Direct infrastructure dependencies
+Static/global clients
+Hard-coded platform logic
+Overusing factories
+Overusing dependency injection
+Premature microservices
+Excessive layers
+"Interface" classes with no real abstraction
+Provider/Adapter duplication
+
+For each, show a small example and correction.
+
+Part 24 — Practical Mental Model
+
+End the notebook with a concise mental model.
+
+I should be able to remember:
+
+Class
+    ↓
+Object
+    ↓
+Composition
+    ↓
+Abstraction
+    ↓
+Interface
+    ↓
+Polymorphism
+    ↓
+Dependency Injection
+    ↓
+SOLID
+    ↓
+Design Patterns
+    ↓
+Ports & Adapters
+    ↓
+Platform-independent Agent
+
+
+Also explain this mental model:
+
+WHAT do I need?
+        ↓
+Interface / Port
+
+WHO performs it?
+        ↓
+Provider
+
+HOW does this platform implement it?
+        ↓
+Adapter
+
+WHERE does the actual SDK/API live?
+        ↓
+Infrastructure
+
+Coding Standards
+
+Use modern Python.
+
+Prefer:
+
+Python 3.11+
+Type hints
+dataclasses
+Protocol
+ABC where appropriate
+Enum
+Explicit return types
+Small classes
+Composition over inheritance
+Dependency injection
+Clean naming
+
+Avoid:
+
+Clever metaprogramming
+Excessive decorators
+Framework-heavy examples
+Over-engineered dependency injection frameworks
+Huge classes
+Excessive abstraction
+
+Use standard Python wherever possible.
+
+If Pydantic or another library is introduced, explain WHY it is useful instead of making it mandatory.
+
+Notebook Structure
+
+Structure the notebook with Markdown explanations followed by executable Python cells.
+
+Every major section should have:
+
+Concept
+
+Explain the concept.
+
+Simple Example
+
+A tiny Python example.
+
+Agentic Example
+
+Apply it to the agent.
+
+Why It Matters
+
+Explain the architectural benefit.
+
+Anti-Pattern
+
+Show what goes wrong.
+
+Exercise
+
+Give me a problem to solve.
+
+Solution
+
+Reveal the solution after the exercise.
+
+Takeaway
+
+Summarize the key lesson.
+
+Important Constraint
+
+Do NOT assume that "more abstraction = better architecture."
+
+Repeatedly evaluate:
+
+Is this abstraction buying us something?
+
+
+The architecture should optimize for:
+
+Maintainability
+Testability
+Reusability
+Platform independence
+Clear responsibilities
+Ease of adding providers
+Ease of replacing infrastructure
+
+while avoiding unnecessary complexity.
+
+Final Deliverable
+
+By the end of the notebook, I should be able to look at an existing single-agent Python codebase and answer:
+
+What are the responsibilities?
+What belongs to the agent?
+What belongs to tools?
+What belongs to the application/service layer?
+What belongs to the domain layer?
+What should be an interface?
+Where should dependency injection be used?
+What is the provider?
+What is the adapter?
+Where should platform-specific code live?
+How do I add Snowflake without changing the agent?
+How do I add Databricks without changing the agent?
+How do I mock the data layer?
+How do I unit-test the agent?
+Where could abstraction be unnecessary?
+How do I recognize over-engineering?
+
+Most importantly, don't just teach me how to write the code.
+
+Teach me how to reason about the architecture and make the design decisions myself.
+
+The final implementation should be a small, understandable reference architecture that I can use as a blueprint for refactoring my existing single-agent system.
